@@ -1,0 +1,33 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+.python-version
+
+# uv
+# (keep uv.lock tracked)
+
+# fastembed / model caches
+.local_cache/
+.cache/
+*.onnx
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Pinecone / demo artifacts
+chroma/
+*.sqlite3
