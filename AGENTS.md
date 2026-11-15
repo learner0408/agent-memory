@@ -8,11 +8,11 @@
 ## Project Structure
 ```
 agent-memory/
-├── AGENTS.md, README.md, pyproject.toml, .env, .env.example
+├── AGENTS.md, README.md, config.py, pyproject.toml, .env, .env.example
 └── examples/
     ├── 01_short_term_memory.py        # working/short-term memory (context-window strategies)
     ├── 02_diy_episodic_semantic.py    # DIY episodic + semantic memory (fastembed + Pinecone)
-    ├── 03_letta_self_managed.py       # Letta (self-managed memory via Docker server)
+    ├── 03_letta_self_managed/         # Letta App Server (TypeScript Agent SDK, Docker, git-backed MemFS)
     └── 04_mem0_extraction.py          # Mem0 extraction-pipeline memory (Anthropic + Pinecone)
 ```
 

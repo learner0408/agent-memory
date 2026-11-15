@@ -2,6 +2,10 @@
 .env
 .env.*
 !.env.example
+app-server-token
+
+# Letta local-backend state (agent memory git repos)
+.letta-state/
 
 # Python
 .venv/

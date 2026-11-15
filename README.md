@@ -8,7 +8,7 @@ All shared configuration (model, index names, dims, cloud/region, Mem0 config) l
 |---|--------|---------|------------------------|
 | 01 | `01_short_term_memory.py` | Short-term / working memory: sliding window + LLM summarization of evicted turns | — (context window only) |
 | 02 | `02_diy_episodic_semantic.py` | DIY long-term memory: episodic records + semantic facts distilled by Claude | Pinecone (serverless, 384-dim, local fastembed embeddings) |
-| 03 | `03_letta_self_managed.py` | Letta (MemGPT): the agent edits its own memory via tool calls | Letta server's Postgres (in-container), Docker |
+| 03 | `03_letta_self_managed/` | Letta (MemGPT): the agent edits its own memory via tool calls; git-backed per-agent MemFS repo | Letta App Server `--backend local` → `.letta-state/` on host (TypeScript Agent SDK) |
 | 04 | `04_mem0_extraction.py` | Mem0: automated extraction pipeline (ADD/UPDATE/DELETE/NOOP per fact) | Pinecone (`agent-memory-mem0`, namespace `mem0`) |
 
 ## Prerequisites
@@ -22,27 +22,33 @@ All shared configuration (model, index names, dims, cloud/region, Mem0 config) l
    - `PINECONE_API_KEY` — used by examples 02 and 04 (free serverless tier is sufficient).
    - `MEM0_TELEMETRY=False` — required (already in `.env.example`): Mem0's telemetry otherwise tries to create its own `mem0migrations`/index on your vector DB, which trips Pinecone's free-tier 5-index cap.
    - Env must be loaded **before** `import mem0` (see imports order in example 04) — the telemetry flag is read at import time.
+3. **Node.js 22.19+** — example 03 only (`@letta-ai/letta-agent-sdk` is TypeScript-only).
 
-## Example 03: Letta server (Docker Desktop)
+## Example 03: Letta App Server (Docker Desktop)
 
-Start the server with your Anthropic key passed through:
+The classic Python Letta server (port 8283) is retired; the supported surface is the **App Server** (`letta/letta:latest`, WebSocket on port 4500). Full instructions in [`examples/03_letta_self_managed/README.md`](examples/03_letta_self_managed/README.md). Short version:
 
 ```bash
-docker run --name letta -p 8283:8283 \
-  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
-  ghcr.io/letta-ai/letta:latest
+set -a; source .env; set +a
+openssl rand -hex 32 > app-server-token
+docker run --rm --name letta-app-server -p 4500:4500 \
+  -v "$(pwd)/.letta-state:/root/.letta" \
+  -v letta-expr-workspace:/workspace \
+  -v "$PWD/app-server-token:/run/secrets/app-server-token:ro" \
+  -e ANTHROPIC_API_KEY \
+  letta/letta:latest \
+  letta server --backend local --listen ws://0.0.0.0:4500 \
+  --ws-auth capability-token --ws-token-file /run/secrets/app-server-token
 ```
 
-- First run pulls the image (~2 GB). The dashboard is at http://localhost:8283.
-- Stop later with `docker stop letta && docker rm letta` — ask before restarting in-session per AGENTS.md.
-- The example script waits for server health, picks the first Anthropic model the server has registered, and expects no other env config.
+With `--backend local`, agent state lives locally at `.letta-state/lc-local-backend/` — each agent's memory is a **git repository** at `memfs/<agent-id>/memory`, inspectable from the host via the bind mount. State is **not** backed up automatically.
 
 ## Running
 
 ```bash
 uv run examples/01_short_term_memory.py        # needs ANTHROPIC_API_KEY
 uv run examples/02_diy_episodic_semantic.py    # needs ANTHROPIC + PINECONE
-uv run examples/03_letta_self_managed.py       # needs Docker+key; runs server-side LLM calls
+(see examples/03_letta_self_managed/README.md) # needs Docker + Node 22.19+
 uv run examples/04_mem0_extraction.py          # needs ANTHROPIC + PINECONE
 ```
 
