@@ -12,7 +12,8 @@ PINECONE_INDEX_NAME = "agent-memory-demo-384"
 MEM0_INDEX_NAME = "agent-memory-mem0"
 MEM0_NAMESPACE = "mem0"
 
-LETTA_URL = "http://localhost:8283"
+LETTA_APP_SERVER_URL = "http://localhost:4500"
+LETTA_TOKEN_FILE = "app-server-token"
 
 MEM0_USER_ID = "maya-demo"
 MEM0_CONFIG = {
