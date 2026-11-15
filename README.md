@@ -30,7 +30,7 @@ The classic Python Letta server (port 8283) is retired; the supported surface is
 
 ```bash
 set -a; source .env; set +a
-openssl rand -hex 32 > app-server-token
+grep '^LETTA_APP_SERVER_TOKEN=' .env | cut -d= -f2- > app-server-token
 docker run --rm --name letta-app-server -p 4500:4500 \
   -v "$(pwd)/.letta-state:/root/.letta" \
   -v letta-expr-workspace:/workspace \
@@ -40,6 +40,8 @@ docker run --rm --name letta-app-server -p 4500:4500 \
   letta server --backend local --listen ws://0.0.0.0:4500 \
   --ws-auth capability-token --ws-token-file /run/secrets/app-server-token
 ```
+
+One-time: generate `openssl rand -hex 32` and store it in `.env` as `LETTA_APP_SERVER_TOKEN=<hex>` — that entry is the single source of truth; the file above is regenerated from it (gitignored).
 
 With `--backend local`, agent state lives locally at `.letta-state/lc-local-backend/` — each agent's memory is a **git repository** at `memfs/<agent-id>/memory`, inspectable from the host via the bind mount. State is **not** backed up automatically.
 
@@ -54,7 +56,7 @@ uv run examples/04_mem0_extraction.py          # needs ANTHROPIC + PINECONE
 
 ## Notes
 
-- **Centralized config**: `config.py` holds `LLM_MODEL`, `EMBEDDING_MODEL`/`EMBEDDING_DIMS`, `PINECONE_INDEX_NAME`, `MEM0_INDEX_NAME`/`MEM0_NAMESPACE`, `LETTA_URL`, and `MEM0_CONFIG`. Scripts import from it after a small `sys.path` bootstrap (they live in `examples/`).
+- **Centralized config**: `config.py` holds `LLM_MODEL`, `EMBEDDING_MODEL`/`EMBEDDING_DIMS`, `PINECONE_INDEX_NAME`, `MEM0_INDEX_NAME`/`MEM0_NAMESPACE`, `LETTA_APP_SERVER_URL`/`LETTA_TOKEN_FILE`, and `MEM0_CONFIG`. Python scripts import from it after a small `sys.path` bootstrap (they live in `examples/`); example 03 (TypeScript) reads the root `.env` directly via dotenv.
 - **Model**: `claude-sonnet-4-6` — `claude-sonnet-4-5` hits end-of-life Nov 30, 2026. Note the Anthropic SDK rejects a `temperature` kwarg for 4.6 models, which is why Mem0's config sets `enable_sampling_parameters: False`.
 - **Embeddings**: `sentence-transformers/all-MiniLM-L6-v2` (384 dims) via `fastembed` (ONNX, runs in-process, no extra API key). Chosen because Anthropic has no embedding API and `torch`/`onnxruntime` latest have no wheels for Intel macOS — `fastembed 0.7.x` + pinned `onnxruntime 1.20.1` do (`pyproject.toml` pins this).
 - **Pinecone indexes**: `agent-memory-demo-384` (ex 02) and `agent-memory-mem0` (ex 04) are auto-created in `aws/us-east-1` if missing. Delete them from the console to reset memory.

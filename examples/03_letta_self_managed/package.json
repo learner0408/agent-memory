@@ -1,0 +1,13 @@
+{
+  "name": "letta-self-managed-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx quickstart.ts"
+  },
+  "devDependencies": {
+    "@letta-ai/letta-agent-sdk": "latest",
+    "dotenv": "latest",
+    "tsx": "latest"
+  }
+}
