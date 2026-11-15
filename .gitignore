@@ -21,6 +21,9 @@ dist/
 # uv
 # (keep uv.lock tracked)
 
+# Node (example 03) - keep package-lock.json tracked
+node_modules/
+
 # fastembed / model caches
 .local_cache/
 .cache/
